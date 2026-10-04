@@ -72,7 +72,7 @@
     <div id="db-error-banner" class="hidden bg-rose-500 text-white px-4 py-3 shadow-md shrink-0 justify-between items-center z-10 transition-all">
         <div class="flex items-center gap-2 max-w-7xl mx-auto w-full">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            <span class="font-medium text-sm sm:text-base">Please insert your Firebase config to save data. Currently running in local offline mode.</span>
+            <span class="font-medium text-sm sm:text-base">Please verify your Firebase config and ensure Firestore Database is enabled. Running in local offline mode.</span>
         </div>
     </div>
 
@@ -232,11 +232,17 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Env Variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-rental-app';
-        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-        let firebaseConfig = {};
-        try { firebaseConfig = JSON.parse(firebaseConfigStr); } catch (e) { console.error("Invalid config"); }
+        // Exact user configuration injected here for GitHub pages compatibility
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rentaltrackerpro-8a955';
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyIWMv2-na65XU3xe7M4hk2g16cxVXKFE",
+            authDomain: "rentaltrackerpro-8a955.firebaseapp.com",
+            projectId: "rentaltrackerpro-8a955",
+            storageBucket: "rentaltrackerpro-8a955.firebasestorage.app",
+            messagingSenderId: "448486842676",
+            appId: "1:448486842676:web:f7194342cd4c70e9c1c561",
+            measurementId: "G-WWZW0377T0"
+        };
 
         let app, auth, db;
         let isOfflineMode = false;
@@ -569,7 +575,7 @@
                     else bookings.push({id, ...payload});
                     renderCalendar();
                 } else {
-                    // Strict Paths Firestore Save
+                    // Save to Firestore Database
                     const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', id);
                     await setDoc(docRef, payload);
                 }
@@ -627,13 +633,13 @@
         async function initAuth() {
             // Function to handle Offline Fallback scenario
             const handleOfflineMode = () => {
-                console.warn("Falling back to local offline mode due to DB config issues.");
+                console.warn("Falling back to local offline mode due to DB config/connection issues.");
                 isOfflineMode = true;
                 currentUserId = 'local-user';
                 dbErrorBanner.classList.replace('hidden', 'flex'); // Show custom error banner
                 authDot.classList.replace('bg-yellow-400', 'bg-rose-500');
                 authDot.classList.remove('animate-pulse');
-                authText.textContent = 'Offline (Config Missing)';
+                authText.textContent = 'Offline (Check Config)';
                 renderCalendar(); // Unblock UI, render empty/local calendar
             };
 
@@ -647,7 +653,8 @@
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
+                
+                // For Github Pages we fall back to anonymous auth to generate a user ID safely
                 const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 
                 // CRITICAL REQUIREMENT: 2-second timeout wrap for authentication
@@ -664,16 +671,17 @@
                 if (currentUserId) {
                     authDot.classList.replace('bg-yellow-400', 'bg-emerald-500');
                     authDot.classList.remove('animate-pulse');
-                    authText.textContent = 'Database Connected';
+                    authText.textContent = 'Online';
+                    dbErrorBanner.classList.replace('flex', 'hidden');
                     
-                    // Hook into Firestore with strict paths
+                    // Hook into Firestore with paths
                     const bookingsRef = collection(db, 'artifacts', appId, 'users', currentUserId, 'bookings');
                     onSnapshot(bookingsRef, (snapshot) => {
                         bookings = [];
                         snapshot.forEach(doc => { bookings.push({ id: doc.id, ...doc.data() }); });
                         renderCalendar();
                     }, (err) => {
-                        console.error("Firestore Snapshot error:", err);
+                        console.error("Firestore Snapshot error. Ensure Firestore DB is enabled in Test Mode:", err);
                         handleOfflineMode();
                     });
                 } else {
