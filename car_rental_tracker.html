@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Rental Tracker PRO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            border: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Highlight spanning days */
+        .status-chip-green { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30; }
+        .status-chip-yellow { @apply bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30; }
+        .status-chip-red { @apply bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-200 dark:border-rose-500/30; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-dark-bg dark:text-gray-100 antialiased h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-white dark:bg-dark-card shadow-sm border-b border-gray-200 dark:border-dark-border z-20 shrink-0 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">RentalTracker<span class="text-indigo-600 dark:text-indigo-400">PRO</span></h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none">
+                    <!-- Sun icon for light mode (hidden in dark) -->
+                    <svg id="theme-icon-light" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <!-- Moon icon for dark mode (hidden in light) -->
+                    <svg id="theme-icon-dark" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                <div id="auth-status" class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-dark-border transition-colors">
+                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" id="auth-dot"></div>
+                    <span id="auth-text" class="hidden sm:inline">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
+        
+        <!-- Dashboard Widgets -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
+            <!-- Revenue Card -->
+            <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border p-6 flex flex-col justify-center transition-colors">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="p-2 bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Revenue</h2>
+                </div>
+                <div class="flex flex-col">
+                    <p id="total-revenue" class="text-3xl font-bold text-gray-900 dark:text-white">₱0.00</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Includes all base rentals & penalties</p>
+                </div>
+            </div>
+
+            <!-- Overdue List Card -->
+            <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border p-0 lg:col-span-2 flex flex-col overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                        Action Required: Overdue Returns
+                    </h2>
+                    <span id="overdue-count" class="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+                </div>
+                <div class="p-0 overflow-y-auto max-h-[160px]" id="overdue-list-container">
+                    <!-- Overdue items injected here -->
+                    <div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">No cars are currently overdue. Great job!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center bg-white dark:bg-dark-card rounded-lg shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden transition-colors">
+                <button id="prev-month" class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none border-r border-gray-200 dark:border-dark-border">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div id="current-month-display" class="px-6 py-2 font-semibold text-gray-700 dark:text-gray-200 min-w-[180px] text-center bg-gray-50 dark:bg-gray-800/50">
+                    Loading...
+                </div>
+                <button id="next-month" class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none border-l border-gray-200 dark:border-dark-border">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <button id="today-btn" class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium text-indigo-600 dark:text-indigo-400 transition-colors focus:outline-none border-l border-gray-200 dark:border-dark-border">
+                    Today
+                </button>
+            </div>
+            
+            <button id="add-booking-top-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                New Booking
+            </button>
+        </div>
+
+        <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden flex-1 min-h-[400px] flex flex-col transition-colors">
+            <div class="grid grid-cols-7 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-gray-800/50 shrink-0">
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sun</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mon</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tue</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Wed</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Thu</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Fri</div>
+                <div class="py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sat</div>
+            </div>
+            
+            <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-gray-200 dark:bg-dark-border gap-px flex-1">
+                <!-- Days injected via JS -->
+            </div>
+        </div>
+    </main>
+
+    <div id="booking-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-dark-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-200 border border-gray-100 dark:border-dark-border flex flex-col max-h-full">
+            
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-dark-border flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 shrink-0">
+                <h3 id="modal-title" class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Add Booking
+                </h3>
+                <button id="close-modal-top" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form id="booking-form" class="p-6 space-y-5 overflow-y-auto">
+                <input type="hidden" id="booking-id">
+                
+                <div>
+                    <label for="renter-name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Renter's Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="renter-name" required placeholder="e.g. Juan Dela Cruz" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow dark:text-white placeholder-gray-400">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="pickup-datetime" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Pickup Date & Time <span class="text-rose-500">*</span></label>
+                        <input type="datetime-local" id="pickup-datetime" required class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow dark:text-white [color-scheme:light] dark:[color-scheme:dark]">
+                    </div>
+                    <div>
+                        <label for="expected-return-datetime" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Expected Return <span class="text-rose-500">*</span></label>
+                        <input type="datetime-local" id="expected-return-datetime" required class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow dark:text-white [color-scheme:light] dark:[color-scheme:dark]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="actual-return-datetime" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Actual Return <span class="text-xs font-normal text-gray-400">(Optional)</span></label>
+                        <input type="datetime-local" id="actual-return-datetime" class="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow dark:text-white [color-scheme:light] dark:[color-scheme:dark]">
+                    </div>
+                    <div>
+                        <label for="base-amount" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Base Rental Amount <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm font-medium">₱</span>
+                            </div>
+                            <input type="number" id="base-amount" required min="0" step="0.01" placeholder="0.00" class="w-full pl-8 pr-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow dark:text-white placeholder-gray-400">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Calculation Preview -->
+                <div id="live-calculation-box" class="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-dark-border mt-2 hidden flex-col gap-2 text-sm">
+                    <div class="flex justify-between text-gray-600 dark:text-gray-300">
+                        <span>Base Amount:</span>
+                        <span id="preview-base" class="font-medium">₱0.00</span>
+                    </div>
+                    <div class="flex justify-between text-rose-600 dark:text-rose-400">
+                        <span>Late Penalty (<span id="preview-hours">0</span>h × ₱200):</span>
+                        <span id="preview-penalty" class="font-medium">₱0.00</span>
+                    </div>
+                    <div class="h-px bg-gray-200 dark:bg-gray-700 w-full my-1"></div>
+                    <div class="flex justify-between text-gray-900 dark:text-white font-bold text-base">
+                        <span>Total Due:</span>
+                        <span id="preview-total">₱0.00</span>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex items-center justify-between gap-3 border-t border-gray-100 dark:border-dark-border mt-6">
+                    <button type="button" id="delete-booking-btn" class="hidden px-4 py-2.5 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
+                        Delete
+                    </button>
+                    <div class="flex gap-3 ml-auto">
+                        <button type="button" id="cancel-booking-btn" class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
+                            Cancel
+                        </button>
+                        <button type="submit" id="save-booking-btn" class="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card shadow-sm flex items-center gap-2">
+                            <span>Save Booking</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Env Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-rental-app';
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        let firebaseConfig = {};
+        try { firebaseConfig = JSON.parse(firebaseConfigStr); } catch (e) { console.error("Invalid config"); }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let bookings = []; // Array of booking objects
+        let currentMonthDate = new Date(); // Controls calendar view
+        let currentUserId = null;
+        let isSaving = false;
+        let clockInterval = null;
+
+        const PENALTY_RATE_PER_HOUR = 200;
+
+        // DOM Elements
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const authDot = document.getElementById('auth-dot');
+        const authText = document.getElementById('auth-text');
+        
+        const calendarGrid = document.getElementById('calendar-grid');
+        const currentMonthDisplay = document.getElementById('current-month-display');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        const todayBtn = document.getElementById('today-btn');
+        const addTopBtn = document.getElementById('add-booking-top-btn');
+        
+        const totalRevenueEl = document.getElementById('total-revenue');
+        const overdueListEl = document.getElementById('overdue-list-container');
+        const overdueCountEl = document.getElementById('overdue-count');
+
+        const modal = document.getElementById('booking-modal');
+        const form = document.getElementById('booking-form');
+        const titleEl = document.getElementById('modal-title');
+        const idInput = document.getElementById('booking-id');
+        const nameInput = document.getElementById('renter-name');
+        const pickupInput = document.getElementById('pickup-datetime');
+        const expectedInput = document.getElementById('expected-return-datetime');
+        const actualInput = document.getElementById('actual-return-datetime');
+        const baseAmountInput = document.getElementById('base-amount');
+        
+        const liveCalcBox = document.getElementById('live-calculation-box');
+        const prevBaseEl = document.getElementById('preview-base');
+        const prevHoursEl = document.getElementById('preview-hours');
+        const prevPenaltyEl = document.getElementById('preview-penalty');
+        const prevTotalEl = document.getElementById('preview-total');
+
+        const deleteBtn = document.getElementById('delete-booking-btn');
+        const closeTopBtn = document.getElementById('close-modal-top');
+        const cancelBtn = document.getElementById('cancel-booking-btn');
+        const saveBtn = document.getElementById('save-booking-btn');
+
+        // Utils
+        const formatPHP = (amount) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
+        const formatShortDate = (dateStr) => {
+            if(!dateStr) return '';
+            const d = new Date(dateStr);
+            return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        };
+        
+        // Setup Theme Toggle
+        let isDark = false;
+        function toggleTheme() {
+            isDark = !isDark;
+            if(isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        themeToggleBtn.addEventListener('click', toggleTheme);
+
+        function calculateBookingData(b) {
+            const now = new Date().getTime();
+            const pickup = new Date(b.pickup).getTime();
+            const expected = new Date(b.expected).getTime();
+            const actual = b.actual ? new Date(b.actual).getTime() : null;
+            
+            let status = 'ongoing'; // yellow
+            let excessHours = 0;
+            let isOverdue = false;
+
+            if (actual) {
+                // Car returned
+                status = 'completed'; // green
+                if (actual > expected) {
+                    const diffMs = actual - expected;
+                    excessHours = Math.ceil(diffMs / (1000 * 60 * 60));
+                }
+            } else {
+                // Not returned yet
+                if (now > expected) {
+                    status = 'overdue'; // red
+                    isOverdue = true;
+                    const diffMs = now - expected;
+                    excessHours = Math.ceil(diffMs / (1000 * 60 * 60));
+                }
+            }
+
+            const penaltyAmount = excessHours * PENALTY_RATE_PER_HOUR;
+            const totalAmount = Number(b.baseAmount) + penaltyAmount;
+            const effectiveEnd = actual ? actual : (status === 'overdue' ? now : expected);
+
+            return { ...b, status, excessHours, isOverdue, penaltyAmount, totalAmount, pickupMs: pickup, effectiveEndMs: effectiveEnd };
+        }
+
+        // Live update form preview
+        function updateFormPreview() {
+            if (!pickupInput.value || !expectedInput.value || !baseAmountInput.value) {
+                liveCalcBox.classList.replace('flex', 'hidden');
+                return;
+            }
+            const b = {
+                pickup: pickupInput.value,
+                expected: expectedInput.value,
+                actual: actualInput.value || null,
+                baseAmount: parseFloat(baseAmountInput.value) || 0
+            };
+            
+            const calc = calculateBookingData(b);
+            
+            prevBaseEl.textContent = formatPHP(calc.baseAmount);
+            prevHoursEl.textContent = calc.excessHours;
+            prevPenaltyEl.textContent = formatPHP(calc.penaltyAmount);
+            prevTotalEl.textContent = formatPHP(calc.totalAmount);
+            
+            liveCalcBox.classList.replace('hidden', 'flex');
+        }
+
+        [expectedInput, actualInput, baseAmountInput].forEach(el => {
+            el.addEventListener('input', updateFormPreview);
+        });
+
+        function updateDashboard(processedBookings) {
+            // Revenue
+            const totalRev = processedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+            totalRevenueEl.textContent = formatPHP(totalRev);
+
+            // Overdue List
+            const overdue = processedBookings.filter(b => b.isOverdue).sort((a,b) => b.penaltyAmount - a.penaltyAmount);
+            overdueCountEl.textContent = overdue.length;
+            
+            if (overdue.length === 0) {
+                overdueListEl.innerHTML = '<div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">No cars are currently overdue. Great job!</div>';
+            } else {
+                overdueListEl.innerHTML = overdue.map(b => `
+                    <div class="px-6 py-3 border-b border-gray-100 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 flex justify-between items-center cursor-pointer transition-colors" onclick="window.editBooking('${b.id}')">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">${b.name}</p>
+                            <p class="text-xs text-rose-500 flex items-center gap-1 mt-0.5">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Due: ${formatShortDate(b.expected)}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-rose-600 dark:text-rose-400">+${formatPHP(b.penaltyAmount)}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${b.excessHours}h late</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderCalendar() {
+            const year = currentMonthDate.getFullYear();
+            const month = currentMonthDate.getMonth();
+            currentMonthDisplay.textContent = currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            
+            calendarGrid.innerHTML = '';
+            const processedBookings = bookings.map(calculateBookingData);
+            
+            // Padding
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.innerHTML += `<div class="bg-white/50 dark:bg-dark-card/50 opacity-30 min-h-[120px] p-2"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayStart = new Date(year, month, day, 0, 0, 0).getTime();
+                const dayEnd = new Date(year, month, day, 23, 59, 59, 999).getTime();
+                const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+
+                // Find bookings that overlap with this specific day
+                const dayBookings = processedBookings.filter(b => {
+                    return b.pickupMs <= dayEnd && b.effectiveEndMs >= dayStart;
+                });
+
+                const cell = document.createElement('div');
+                cell.className = `
+                    relative bg-white dark:bg-dark-card min-h-[120px] p-2 flex flex-col gap-1
+                    hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group
+                    ${isToday ? 'ring-2 ring-inset ring-indigo-500 bg-indigo-50/10 dark:bg-indigo-900/10' : ''}
+                `;
+                cell.onclick = (e) => {
+                    // Prevent firing if clicking on a booking chip (chip handles its own click)
+                    if(e.target.closest('.booking-chip')) return;
+                    
+                    // Pre-fill date for new booking based on cell clicked
+                    const prefillDate = new Date(year, month, day, 12, 0).toISOString().slice(0,16);
+                    openModal(null, prefillDate);
+                };
+
+                const dateHeader = document.createElement('div');
+                dateHeader.className = `text-sm font-semibold mb-1 flex justify-between items-start ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300'}`;
+                dateHeader.innerHTML = `
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full ${isToday ? 'bg-indigo-600 text-white dark:bg-indigo-500' : ''}">${day}</span>
+                    <span class="text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mt-1.5 mr-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </span>
+                `;
+                cell.appendChild(dateHeader);
+
+                // Render Booking Chips
+                dayBookings.forEach(b => {
+                    const chip = document.createElement('div');
+                    let colorClass = 'status-chip-yellow'; // ongoing
+                    if(b.status === 'completed') colorClass = 'status-chip-green';
+                    if(b.status === 'overdue') colorClass = 'status-chip-red';
+
+                    chip.className = `booking-chip text-[11px] font-medium p-1.5 rounded border leading-tight truncate shadow-sm hover:shadow transition-shadow ${colorClass}`;
+                    chip.innerHTML = `
+                        <div class="font-bold truncate">${b.name}</div>
+                        <div class="flex justify-between mt-0.5 opacity-90">
+                            <span>${formatPHP(b.totalAmount)}</span>
+                        </div>
+                    `;
+                    chip.onclick = (e) => {
+                        e.stopPropagation(); // prevent cell click
+                        openModal(b);
+                    };
+                    cell.appendChild(chip);
+                });
+
+                calendarGrid.appendChild(cell);
+            }
+
+            // Update Dashboard with fresh calculations
+            updateDashboard(processedBookings);
+        }
+
+        // Live clock to re-evaluate Overdue statuses every minute
+        function startLiveClock() {
+            if(clockInterval) clearInterval(clockInterval);
+            clockInterval = setInterval(() => {
+                renderCalendar(); // Recalculates everything based on new Date()
+            }, 60000);
+        }
+
+        function formatForInput(isoString) {
+            if(!isoString) return '';
+            // HTML datetime-local requires YYYY-MM-DDThh:mm format
+            const d = new Date(isoString);
+            return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        }
+
+        function openModal(booking = null, prefillDateStr = null) {
+            form.reset();
+            liveCalcBox.classList.replace('flex', 'hidden');
+
+            if (booking) {
+                titleEl.innerHTML = `<svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg> Edit Booking`;
+                idInput.value = booking.id;
+                nameInput.value = booking.name;
+                pickupInput.value = formatForInput(booking.pickup);
+                expectedInput.value = formatForInput(booking.expected);
+                actualInput.value = formatForInput(booking.actual);
+                baseAmountInput.value = booking.baseAmount;
+                deleteBtn.classList.remove('hidden');
+                updateFormPreview();
+            } else {
+                titleEl.innerHTML = `<svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Add Booking`;
+                idInput.value = '';
+                deleteBtn.classList.add('hidden');
+                
+                if(prefillDateStr) {
+                    pickupInput.value = prefillDateStr;
+                    // Default expected return to 1 day later
+                    const nextDay = new Date(new Date(prefillDateStr).getTime() + 86400000);
+                    expectedInput.value = formatForInput(nextDay.toISOString());
+                }
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                nameInput.focus();
+            }, 10);
+        }
+
+        // Expose to window for inline onclick in template string
+        window.editBooking = (id) => {
+            const b = bookings.find(x => x.id === id);
+            if(b) openModal(b);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        }
+
+        [closeTopBtn, cancelBtn].forEach(btn => btn.addEventListener('click', closeModal));
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        addTopBtn.addEventListener('click', () => openModal());
+        
+        prevMonthBtn.addEventListener('click', () => { currentMonthDate.setMonth(currentMonthDate.getMonth() - 1); renderCalendar(); });
+        nextMonthBtn.addEventListener('click', () => { currentMonthDate.setMonth(currentMonthDate.getMonth() + 1); renderCalendar(); });
+        todayBtn.addEventListener('click', () => { currentMonthDate = new Date(); renderCalendar(); });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserId || isSaving) return;
+
+            const id = idInput.value || crypto.randomUUID();
+            const payload = {
+                name: nameInput.value.trim(),
+                pickup: new Date(pickupInput.value).toISOString(),
+                expected: new Date(expectedInput.value).toISOString(),
+                actual: actualInput.value ? new Date(actualInput.value).toISOString() : null,
+                baseAmount: parseFloat(baseAmountInput.value) || 0,
+                updatedAt: new Date().toISOString()
+            };
+
+            // Validation
+            if (new Date(payload.expected).getTime() < new Date(payload.pickup).getTime()) {
+                // Custom UI error instead of alert
+                expectedInput.classList.add('ring-2', 'ring-rose-500');
+                setTimeout(() => expectedInput.classList.remove('ring-2', 'ring-rose-500'), 2000);
+                return;
+            }
+
+            isSaving = true;
+            const originalBtnHtml = saveBtn.innerHTML;
+            saveBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+            saveBtn.disabled = true;
+
+            try {
+                // RULE 1: Strict Paths
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', id);
+                await setDoc(docRef, payload);
+                closeModal();
+            } catch (error) {
+                console.error("Save error:", error);
+                saveBtn.innerHTML = "Error!";
+                saveBtn.classList.replace('bg-indigo-600', 'bg-rose-600');
+                await new Promise(r => setTimeout(r, 2000));
+            } finally {
+                isSaving = false;
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnHtml;
+                saveBtn.classList.replace('bg-rose-600', 'bg-indigo-600');
+            }
+        });
+
+        deleteBtn.addEventListener('click', async () => {
+            if (!currentUserId || isSaving || !idInput.value) return;
+            
+            if (deleteBtn.textContent.trim() !== "Confirm?") {
+                deleteBtn.textContent = "Confirm?";
+                deleteBtn.classList.replace('bg-rose-50', 'bg-rose-600');
+                deleteBtn.classList.replace('text-rose-600', 'text-white');
+                setTimeout(() => {
+                    if (modal.classList.contains('hidden')) return;
+                    deleteBtn.textContent = "Delete";
+                    deleteBtn.classList.replace('bg-rose-600', 'bg-rose-50');
+                    deleteBtn.classList.replace('text-white', 'text-rose-600');
+                }, 3000);
+                return;
+            }
+
+            isSaving = true;
+            deleteBtn.innerHTML = '...';
+            try {
+                // RULE 1: Strict Paths
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', idInput.value);
+                await deleteDoc(docRef);
+                closeModal();
+            } catch (error) {
+                console.error("Delete error:", error);
+            } finally {
+                isSaving = false;
+                deleteBtn.textContent = "Delete";
+                deleteBtn.classList.replace('bg-rose-600', 'bg-rose-50');
+                deleteBtn.classList.replace('text-white', 'text-rose-600');
+            }
+        });
+
+        async function initAuth() {
+            try {
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) await signInWithCustomToken(auth, token);
+                else await signInAnonymously(auth);
+                
+                currentUserId = auth.currentUser?.uid;
+                
+                if (currentUserId) {
+                    authDot.classList.replace('bg-yellow-400', 'bg-emerald-500');
+                    authDot.classList.remove('animate-pulse');
+                    authText.textContent = 'Synced';
+                    
+                    // RULE 1 & 2: Strict path, basic collection fetch
+                    const bookingsRef = collection(db, 'artifacts', appId, 'users', currentUserId, 'bookings');
+                    onSnapshot(bookingsRef, (snapshot) => {
+                        bookings = [];
+                        snapshot.forEach(doc => { bookings.push({ id: doc.id, ...doc.data() }); });
+                        renderCalendar();
+                    }, (err) => console.error(err));
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                authDot.classList.replace('bg-yellow-400', 'bg-rose-500');
+                authText.textContent = 'Offline';
+                renderCalendar(); 
+            }
+        }
+
+        // Boot
+        renderCalendar();
+        startLiveClock();
+        initAuth();
+
+    </script>
+</body>
+</html>
