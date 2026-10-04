@@ -38,9 +38,9 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
         /* Highlight spanning days */
-        .status-chip-green { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30; }
-        .status-chip-yellow { @apply bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30; }
-        .status-chip-red { @apply bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-200 dark:border-rose-500/30; }
+        .status-chip-green { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30; }
+        .status-chip-yellow { @apply bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30; }
+        .status-chip-red { @apply bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 dark:bg-dark-bg dark:text-gray-100 antialiased h-screen flex flex-col overflow-hidden">
@@ -48,7 +48,7 @@
     <header class="bg-white dark:bg-dark-card shadow-sm border-b border-gray-200 dark:border-dark-border z-20 shrink-0 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-indigo-600 rounded-lg text-white">
+                <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
@@ -56,23 +56,27 @@
                 <h1 class="text-xl font-bold tracking-tight">RentalTracker<span class="text-indigo-600 dark:text-indigo-400">PRO</span></h1>
             </div>
             <div class="flex items-center gap-4">
-                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none">
-                    <!-- Sun icon for light mode (hidden in dark) -->
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none" title="Toggle Dark/Light Mode">
                     <svg id="theme-icon-light" class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <!-- Moon icon for dark mode (hidden in light) -->
                     <svg id="theme-icon-dark" class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
                 <div id="auth-status" class="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-dark-border transition-colors">
                     <div class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse" id="auth-dot"></div>
-                    <span id="auth-text" class="hidden sm:inline">Connecting...</span>
+                    <span id="auth-text" class="hidden sm:inline text-gray-700 dark:text-gray-300">Connecting...</span>
                 </div>
             </div>
         </div>
     </header>
 
+    <!-- Error Banner (Hidden by Default) -->
+    <div id="db-error-banner" class="hidden bg-rose-500 text-white px-4 py-3 shadow-md shrink-0 justify-between items-center z-10 transition-all">
+        <div class="flex items-center gap-2 max-w-7xl mx-auto w-full">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="font-medium text-sm sm:text-base">Please insert your Firebase config to save data. Currently running in local offline mode.</span>
+        </div>
+    </div>
+
     <main class="flex-1 overflow-y-auto p-4 sm:p-6 max-w-7xl mx-auto w-full flex flex-col gap-6">
-        
-        <!-- Dashboard Widgets -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
             <!-- Revenue Card -->
             <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border p-6 flex flex-col justify-center transition-colors">
@@ -84,7 +88,7 @@
                 </div>
                 <div class="flex flex-col">
                     <p id="total-revenue" class="text-3xl font-bold text-gray-900 dark:text-white">₱0.00</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Includes all base rentals & penalties</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Includes base rentals & late penalties</p>
                 </div>
             </div>
 
@@ -95,11 +99,10 @@
                         <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
                         Action Required: Overdue Returns
                     </h2>
-                    <span id="overdue-count" class="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full">0</span>
+                    <span id="overdue-count" class="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400 text-xs font-bold px-2.5 py-1 rounded-full border border-rose-200 dark:border-rose-800">0</span>
                 </div>
-                <div class="p-0 overflow-y-auto max-h-[160px]" id="overdue-list-container">
-                    <!-- Overdue items injected here -->
-                    <div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">No cars are currently overdue. Great job!</div>
+                <div class="p-0 overflow-y-auto max-h-[160px] min-h-[80px]" id="overdue-list-container">
+                    <div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">Loading overdue data...</div>
                 </div>
             </div>
         </div>
@@ -120,7 +123,7 @@
                 </button>
             </div>
             
-            <button id="add-booking-top-btn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg flex items-center gap-2">
+            <button id="add-booking-top-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 New Booking
             </button>
@@ -138,7 +141,7 @@
             </div>
             
             <div id="calendar-grid" class="grid grid-cols-7 auto-rows-fr bg-gray-200 dark:bg-dark-border gap-px flex-1">
-                <!-- Days injected via JS -->
+                <!-- Grid Cells will be injected here via JS -->
             </div>
         </div>
     </main>
@@ -191,7 +194,6 @@
                     </div>
                 </div>
 
-                <!-- Live Calculation Preview -->
                 <div id="live-calculation-box" class="bg-gray-50 dark:bg-gray-800/80 rounded-lg p-4 border border-gray-200 dark:border-dark-border mt-2 hidden flex-col gap-2 text-sm">
                     <div class="flex justify-between text-gray-600 dark:text-gray-300">
                         <span>Base Amount:</span>
@@ -209,7 +211,7 @@
                 </div>
 
                 <div class="pt-4 flex items-center justify-between gap-3 border-t border-gray-100 dark:border-dark-border mt-6">
-                    <button type="button" id="delete-booking-btn" class="hidden px-4 py-2.5 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card">
+                    <button type="button" id="delete-booking-btn" class="hidden px-4 py-2.5 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 dark:focus:ring-offset-dark-card border border-rose-200 dark:border-rose-900/50">
                         Delete
                     </button>
                     <div class="flex gap-3 ml-auto">
@@ -236,12 +238,11 @@
         let firebaseConfig = {};
         try { firebaseConfig = JSON.parse(firebaseConfigStr); } catch (e) { console.error("Invalid config"); }
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let bookings = []; // Array of booking objects
-        let currentMonthDate = new Date(); // Controls calendar view
+        let app, auth, db;
+        let isOfflineMode = false;
+        
+        let bookings = []; 
+        let currentMonthDate = new Date();
         let currentUserId = null;
         let isSaving = false;
         let clockInterval = null;
@@ -252,6 +253,7 @@
         const themeToggleBtn = document.getElementById('theme-toggle');
         const authDot = document.getElementById('auth-dot');
         const authText = document.getElementById('auth-text');
+        const dbErrorBanner = document.getElementById('db-error-banner');
         
         const calendarGrid = document.getElementById('calendar-grid');
         const currentMonthDisplay = document.getElementById('current-month-display');
@@ -285,7 +287,6 @@
         const cancelBtn = document.getElementById('cancel-booking-btn');
         const saveBtn = document.getElementById('save-booking-btn');
 
-        // Utils
         const formatPHP = (amount) => new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
         const formatShortDate = (dateStr) => {
             if(!dateStr) return '';
@@ -293,7 +294,6 @@
             return `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         };
         
-        // Setup Theme Toggle
         let isDark = false;
         function toggleTheme() {
             isDark = !isDark;
@@ -311,19 +311,19 @@
             const expected = new Date(b.expected).getTime();
             const actual = b.actual ? new Date(b.actual).getTime() : null;
             
-            let status = 'ongoing'; // yellow
+            let status = 'ongoing'; // default yellow
             let excessHours = 0;
             let isOverdue = false;
 
             if (actual) {
-                // Car returned
+                // Car has been returned
                 status = 'completed'; // green
                 if (actual > expected) {
                     const diffMs = actual - expected;
-                    excessHours = Math.ceil(diffMs / (1000 * 60 * 60));
+                    excessHours = Math.ceil(diffMs / (1000 * 60 * 60)); // Round up any partial hour
                 }
             } else {
-                // Not returned yet
+                // Not returned yet, evaluate against current time
                 if (now > expected) {
                     status = 'overdue'; // red
                     isOverdue = true;
@@ -339,7 +339,6 @@
             return { ...b, status, excessHours, isOverdue, penaltyAmount, totalAmount, pickupMs: pickup, effectiveEndMs: effectiveEnd };
         }
 
-        // Live update form preview
         function updateFormPreview() {
             if (!pickupInput.value || !expectedInput.value || !baseAmountInput.value) {
                 liveCalcBox.classList.replace('flex', 'hidden');
@@ -367,11 +366,11 @@
         });
 
         function updateDashboard(processedBookings) {
-            // Revenue
+            // Revenue Summation
             const totalRev = processedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
             totalRevenueEl.textContent = formatPHP(totalRev);
 
-            // Overdue List
+            // Overdue logic
             const overdue = processedBookings.filter(b => b.isOverdue).sort((a,b) => b.penaltyAmount - a.penaltyAmount);
             overdueCountEl.textContent = overdue.length;
             
@@ -379,11 +378,11 @@
                 overdueListEl.innerHTML = '<div class="p-6 text-center text-sm text-gray-500 dark:text-gray-400 italic">No cars are currently overdue. Great job!</div>';
             } else {
                 overdueListEl.innerHTML = overdue.map(b => `
-                    <div class="px-6 py-3 border-b border-gray-100 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 flex justify-between items-center cursor-pointer transition-colors" onclick="window.editBooking('${b.id}')">
+                    <div class="px-6 py-3 border-b border-gray-100 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-gray-800/50 flex justify-between items-center cursor-pointer transition-colors group" onclick="window.editBooking('${b.id}')">
                         <div>
-                            <p class="text-sm font-semibold text-gray-900 dark:text-white">${b.name}</p>
-                            <p class="text-xs text-rose-500 flex items-center gap-1 mt-0.5">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">${b.name}</p>
+                            <p class="text-xs text-rose-500 flex items-center gap-1 mt-0.5 font-medium">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Due: ${formatShortDate(b.expected)}
                             </p>
                         </div>
@@ -407,9 +406,9 @@
             calendarGrid.innerHTML = '';
             const processedBookings = bookings.map(calculateBookingData);
             
-            // Padding
+            // Padding for start of month
             for (let i = 0; i < firstDay; i++) {
-                calendarGrid.innerHTML += `<div class="bg-white/50 dark:bg-dark-card/50 opacity-30 min-h-[120px] p-2"></div>`;
+                calendarGrid.innerHTML += `<div class="bg-white/50 dark:bg-dark-card/50 opacity-30 min-h-[120px] p-2 border-r border-b border-transparent"></div>`;
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -426,13 +425,10 @@
                 cell.className = `
                     relative bg-white dark:bg-dark-card min-h-[120px] p-2 flex flex-col gap-1
                     hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group
-                    ${isToday ? 'ring-2 ring-inset ring-indigo-500 bg-indigo-50/10 dark:bg-indigo-900/10' : ''}
+                    ${isToday ? 'ring-2 ring-inset ring-indigo-500 bg-indigo-50/10 dark:bg-indigo-900/10 z-10' : ''}
                 `;
                 cell.onclick = (e) => {
-                    // Prevent firing if clicking on a booking chip (chip handles its own click)
-                    if(e.target.closest('.booking-chip')) return;
-                    
-                    // Pre-fill date for new booking based on cell clicked
+                    if(e.target.closest('.booking-chip')) return; // Prevent double trigger
                     const prefillDate = new Date(year, month, day, 12, 0).toISOString().slice(0,16);
                     openModal(null, prefillDate);
                 };
@@ -454,15 +450,15 @@
                     if(b.status === 'completed') colorClass = 'status-chip-green';
                     if(b.status === 'overdue') colorClass = 'status-chip-red';
 
-                    chip.className = `booking-chip text-[11px] font-medium p-1.5 rounded border leading-tight truncate shadow-sm hover:shadow transition-shadow ${colorClass}`;
+                    chip.className = `booking-chip text-[11px] font-medium p-1.5 rounded-md leading-tight truncate shadow-sm hover:shadow-md transition-all ${colorClass}`;
                     chip.innerHTML = `
-                        <div class="font-bold truncate">${b.name}</div>
-                        <div class="flex justify-between mt-0.5 opacity-90">
+                        <div class="font-bold truncate tracking-wide">${b.name}</div>
+                        <div class="flex justify-between mt-0.5 opacity-90 text-[10px]">
                             <span>${formatPHP(b.totalAmount)}</span>
                         </div>
                     `;
                     chip.onclick = (e) => {
-                        e.stopPropagation(); // prevent cell click
+                        e.stopPropagation();
                         openModal(b);
                     };
                     cell.appendChild(chip);
@@ -471,21 +467,18 @@
                 calendarGrid.appendChild(cell);
             }
 
-            // Update Dashboard with fresh calculations
             updateDashboard(processedBookings);
         }
 
-        // Live clock to re-evaluate Overdue statuses every minute
         function startLiveClock() {
             if(clockInterval) clearInterval(clockInterval);
             clockInterval = setInterval(() => {
-                renderCalendar(); // Recalculates everything based on new Date()
-            }, 60000);
+                renderCalendar(); 
+            }, 60000); // Re-calc every minute
         }
 
         function formatForInput(isoString) {
             if(!isoString) return '';
-            // HTML datetime-local requires YYYY-MM-DDThh:mm format
             const d = new Date(isoString);
             return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
         }
@@ -511,7 +504,6 @@
                 
                 if(prefillDateStr) {
                     pickupInput.value = prefillDateStr;
-                    // Default expected return to 1 day later
                     const nextDay = new Date(new Date(prefillDateStr).getTime() + 86400000);
                     expectedInput.value = formatForInput(nextDay.toISOString());
                 }
@@ -525,7 +517,6 @@
             }, 10);
         }
 
-        // Expose to window for inline onclick in template string
         window.editBooking = (id) => {
             const b = bookings.find(x => x.id === id);
             if(b) openModal(b);
@@ -547,7 +538,7 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUserId || isSaving) return;
+            if (isSaving) return;
 
             const id = idInput.value || crypto.randomUUID();
             const payload = {
@@ -559,9 +550,7 @@
                 updatedAt: new Date().toISOString()
             };
 
-            // Validation
             if (new Date(payload.expected).getTime() < new Date(payload.pickup).getTime()) {
-                // Custom UI error instead of alert
                 expectedInput.classList.add('ring-2', 'ring-rose-500');
                 setTimeout(() => expectedInput.classList.remove('ring-2', 'ring-rose-500'), 2000);
                 return;
@@ -569,13 +558,21 @@
 
             isSaving = true;
             const originalBtnHtml = saveBtn.innerHTML;
-            saveBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+            saveBtn.innerHTML = `Saving...`;
             saveBtn.disabled = true;
 
             try {
-                // RULE 1: Strict Paths
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', id);
-                await setDoc(docRef, payload);
+                if (isOfflineMode || !currentUserId) {
+                    // Save to local array memory fallback
+                    const index = bookings.findIndex(b => b.id === id);
+                    if(index > -1) bookings[index] = {id, ...payload};
+                    else bookings.push({id, ...payload});
+                    renderCalendar();
+                } else {
+                    // Strict Paths Firestore Save
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', id);
+                    await setDoc(docRef, payload);
+                }
                 closeModal();
             } catch (error) {
                 console.error("Save error:", error);
@@ -591,7 +588,7 @@
         });
 
         deleteBtn.addEventListener('click', async () => {
-            if (!currentUserId || isSaving || !idInput.value) return;
+            if (isSaving || !idInput.value) return;
             
             if (deleteBtn.textContent.trim() !== "Confirm?") {
                 deleteBtn.textContent = "Confirm?";
@@ -609,9 +606,13 @@
             isSaving = true;
             deleteBtn.innerHTML = '...';
             try {
-                // RULE 1: Strict Paths
-                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', idInput.value);
-                await deleteDoc(docRef);
+                if (isOfflineMode || !currentUserId) {
+                    bookings = bookings.filter(b => b.id !== idInput.value);
+                    renderCalendar();
+                } else {
+                    const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'bookings', idInput.value);
+                    await deleteDoc(docRef);
+                }
                 closeModal();
             } catch (error) {
                 console.error("Delete error:", error);
@@ -624,36 +625,67 @@
         });
 
         async function initAuth() {
+            // Function to handle Offline Fallback scenario
+            const handleOfflineMode = () => {
+                console.warn("Falling back to local offline mode due to DB config issues.");
+                isOfflineMode = true;
+                currentUserId = 'local-user';
+                dbErrorBanner.classList.replace('hidden', 'flex'); // Show custom error banner
+                authDot.classList.replace('bg-yellow-400', 'bg-rose-500');
+                authDot.classList.remove('animate-pulse');
+                authText.textContent = 'Offline (Config Missing)';
+                renderCalendar(); // Unblock UI, render empty/local calendar
+            };
+
+            // Basic check if config is completely empty
+            if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+                handleOfflineMode();
+                return;
+            }
+
             try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
                 const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                if (token) await signInWithCustomToken(auth, token);
-                else await signInAnonymously(auth);
+                
+                // CRITICAL REQUIREMENT: 2-second timeout wrap for authentication
+                const authPromise = token ? signInWithCustomToken(auth, token) : signInAnonymously(auth);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Firebase connection timeout')), 2000)
+                );
+
+                // Race the auth against the 2 second clock
+                await Promise.race([authPromise, timeoutPromise]);
                 
                 currentUserId = auth.currentUser?.uid;
                 
                 if (currentUserId) {
                     authDot.classList.replace('bg-yellow-400', 'bg-emerald-500');
                     authDot.classList.remove('animate-pulse');
-                    authText.textContent = 'Synced';
+                    authText.textContent = 'Database Connected';
                     
-                    // RULE 1 & 2: Strict path, basic collection fetch
+                    // Hook into Firestore with strict paths
                     const bookingsRef = collection(db, 'artifacts', appId, 'users', currentUserId, 'bookings');
                     onSnapshot(bookingsRef, (snapshot) => {
                         bookings = [];
                         snapshot.forEach(doc => { bookings.push({ id: doc.id, ...doc.data() }); });
                         renderCalendar();
-                    }, (err) => console.error(err));
+                    }, (err) => {
+                        console.error("Firestore Snapshot error:", err);
+                        handleOfflineMode();
+                    });
+                } else {
+                    handleOfflineMode();
                 }
             } catch (error) {
-                console.error("Auth error:", error);
-                authDot.classList.replace('bg-yellow-400', 'bg-rose-500');
-                authText.textContent = 'Offline';
-                renderCalendar(); 
+                console.error("Auth/Connection Initialization Error:", error);
+                handleOfflineMode();
             }
         }
 
         // Boot
-        renderCalendar();
         startLiveClock();
         initAuth();
 
